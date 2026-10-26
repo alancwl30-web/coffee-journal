@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const {brewAdvice}=require('./dist/brew-advice.js');
+const cup={clicks:28,dose:12,prefAcid:'high',acid:4};
+const advice=brewAdvice(cup,{clicks:24,acid:2});
+assert.equal(advice.field,'clicks');assert.equal(advice.value,26);
+assert.equal(cup.clicks,28,'Original record remains unchanged');
+assert.equal(brewAdvice({clicks:24,prefBitter:'astringent'}).value,26);
+assert.equal(brewAdvice({dose:12,prefStrength:'weak'}).value,13);
+assert.equal(brewAdvice({dose:12,prefStrength:'strong'}).value,11);
+assert.ok(brewAdvice({clicks:1,prefAcid:'high'}).message);
+assert.ok(brewAdvice({clicks:24,acid:5}).message,'Acidity strength alone does not imply dislike');
+assert.ok(brewAdvice({prefAcid:'low'}).message);
+assert.ok(brewAdvice({clicks:24,prefAcid:'high',prefBitter:'bitter'}).message);
+console.log('Advice rules: 9 checks passed');

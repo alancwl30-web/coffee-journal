@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const {createCoffeeTranslator}=require('./dist/i18n.js');
+const dict=require('./dist/i18n-en.json');
+const t=createCoffeeTranslator(dict);
+for(const [key,value] of Object.entries(dict))assert.equal(t.en(key),value,'exact message: '+key);
+assert.equal(t.translate('沖煮日誌','en'),'Brew Journal');assert.equal(t.translate('沖煮日誌','zh-Hant'),'沖煮日誌');
+assert.equal(t.translate('Log this brew','zh-Hant'),'記低呢一杯');
+assert.equal(t.en('第 2／4 段'),'Step 2 / 4');assert.equal(t.en('第 1、2 段合併準備'),'Step 1, 2 prepared together');
+assert.equal(t.en('12g 粉 → 200g 注水'),'12g coffee → 200g brewing water');
+assert.equal(t.en('距離參考時間 1:45'),'Reference countdown 1:45');
+assert.equal(t.en('86°C · 200g 水'),'86°C · 200g water');
+assert.equal(t.en('180秒'),'180 sec');
+assert.equal(t.en('1 杯'),'1 brew');assert.equal(t.en('1 次注水'),'1 pour');
+assert.equal(t.en('熱量不足：請先預熱壺、增加準備水量，或降低目標／散熱補償。'),'Not enough heat: preheat the kettle, prepare more water, or lower the target / compensation.');
+assert.equal(t.en('0:00 注水 +60g / 90°C · 閥門開 · 等至 0:30'),'0:00 Pour +60g / 90°C · Valve open · Wait until 0:30');
+console.log('Localisation: '+Object.keys(dict).length+' exact messages, dynamic quantities, countdowns, recipe steps, error messages and reversible cached labels passed.');

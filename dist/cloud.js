@@ -21,6 +21,7 @@
   }
   function updateStatus() {
     const signed=!!user, pending=state?Object.keys(state.pending).length:0;
+    find('cloud-account').setAttribute('translate',signed?'no':'yes');
     find('cloud-account').textContent=signed?`${user.displayName||'Google 帳戶'} · ${user.email||''}`:phase==='loading'?'正在啟動帳戶同步…':'跨裝置記錄每一杯';
     find('cloud-login').hidden=signed;find('cloud-login').disabled=phase==='loading'||!sdk;
     find('cloud-check').hidden=!signed;find('cloud-logout').hidden=!signed;find('cloud-logout').disabled=phase==='loading';
@@ -30,7 +31,7 @@
     find('cloud-import-button').disabled=importing||!serverSeen;
     let status='只存本機 · 登入同一個 Google 帳戶後，可喺其他裝置讀返紀錄。';
     if(phase==='loading')status='正在確認登入狀態；完成前暫時未能儲存。';
-    else if(signed)status=lastError?`同步失敗${pending?' · '+pending+' 杯保留喺本機等待重試':''}`:pending?`${navigator.onLine?'儲存中':'離線，等待同步'} · ${pending} 杯已保留喺此瀏覽器`:!navigator.onLine?'離線 · 顯示本機副本':serverSeen?'已同步至雲端':'正在讀取雲端紀錄…';
+    else if(signed)status=lastError?`同步失敗${pending?' · '+pending+' 筆保留喺本機等待重試':''}`:pending?`${navigator.onLine?'儲存中':'離線，等待同步'} · ${pending} 筆已保留喺此瀏覽器`:!navigator.onLine?'離線 · 顯示本機副本':serverSeen?'已同步至雲端':'正在讀取雲端紀錄…';
     find('cloud-status').textContent=status;panel.dataset.state=lastError?'error':pending?'pending':signed&&serverSeen?'synced':'local';
   }
   function durable(next) {localStorage.setItem(prefix+next.uid,JSON.stringify(next));state=next;}
@@ -66,7 +67,8 @@
     }
   }
   window.coffeeCloud={
-    persist(next) {
+    persist(next, includesRecipes=false) {
+      if(!includesRecipes)next=[...next,...appUI.getRecords().filter(r=>r._customRecipe||r._beanProfile||r._preferences)];
       if(phase==='loading'||phase==='failed'){toast('帳戶同步未準備好；請重試連線或揀「繼續只存本機」。');return false}
       if(!user){try{localStorage.setItem(legacyKey,JSON.stringify(next));appUI.replaceRecords(next);updateStatus();return true}catch{toast('本機儲存失敗，請先匯出備份。');return false}}
       try {
@@ -84,7 +86,7 @@
       await sdk.setPersistence(sdk.auth,sdk.browserLocalPersistence);
       stopAuth?.();stopAuth=sdk.onAuthStateChanged(sdk.auth, nextUser=>{
         epoch++;unsubscribe?.();unsubscribe=null;serverSeen=false;lastError='';
-        appUI.closeAccountViews();find('cloud-check-result').hidden=true;user=nextUser;state=null;phase='ready';
+        appUI.closeAccountViews();find('cloud-check-result').hidden=true;user=nextUser;state=null;phase='ready';window.coffeeExperienceAccount?.(user?.uid||'local');
         if(user){try{state=currentDisk();publishRows();attachListener();flush()}catch(error){phase='failed';lastError=message(error);appUI.replaceRecords([])}}
         else publishRows();updateStatus();
       },error=>{phase='failed';lastError=message(error);updateStatus()});
@@ -120,7 +122,7 @@
       const fresh=currentDisk(),known=new Set([...snapshot.docs.map(d=>d.id),...fresh.records.map(r=>r.id)]);
       const additions=legacy().filter(r=>!known.has(r.id));
       if(!additions.length){toast('舊紀錄已經喺呢個帳戶，唔會重複加入。');return}
-      durable(core.queueChanges(fresh,[],additions,()=>crypto.randomUUID()));publishRows();flush();toast('已加入 '+additions.length+' 杯，請留意同步狀態；本機原檔保留。');
+      durable(core.queueChanges(fresh,[],additions,()=>crypto.randomUUID()));publishRows();flush();toast('已加入 '+additions.length+' 筆，請留意同步狀態；本機原檔保留。');
     }catch(error){lastError=message(error)}finally{importing=false;updateStatus()}
   };
   window.addEventListener('online',()=>{if(user){lastError='';flush()}updateStatus()});window.addEventListener('offline',updateStatus);

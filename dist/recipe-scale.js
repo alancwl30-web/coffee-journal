@@ -22,7 +22,7 @@ function scaleRecipe(recipe, sourceStages, dose, customWater = null) {
   let i = 0;
   const adjustedStages = sourceStages.map(s => ({...s,
     water: s.action === '注水' ? allocations[i++].units / 10 : 0,
-    actualWater: '', actualTime: '',
+    actualWater: '', actualTime: '', actualTemp: '',
     // Keep numeric water/ice instructions consistent with the adjusted targets.
     note: String(s.note || '').replace(/(\d+(?:\.\d+)?)\s*g\b/gi, (_, grams) => round(Number(grams) * (String(s.note).includes('冰') ? dose / recipe.dose : water / recipe.water)) + 'g')
   }));
@@ -51,9 +51,10 @@ if (typeof document !== 'undefined') (() => {
   const parseMeta = value => {try {return typeof value === 'string' ? JSON.parse(value) : value} catch {return null}};
   function showProvenance() {
     const m = parseMeta(meta.value); provenance.hidden = !m;
-    provenance.textContent = m ? `${m.title} · 按粉量調整版（原配方 ${m.originalDose}g／${m.originalWater}g）。時間、水溫及研磨沿用參考；請記低實際流完時間。` : '';
+    provenance.innerHTML = m ? `<span translate="no">${esc(m.title)}</span> · 按粉量調整版（原配方 ${m.originalDose}g／${m.originalWater}g）。時間、水溫及研磨沿用參考；請記低實際流完時間。` : '';
   }
   function update() {
+    modal.querySelectorAll('[data-scale-dose]').forEach(b=>{const selected=Number(b.dataset.scaleDose)===Number(find('#scale-dose').value);b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
     const custom = find('#scale-mode').value === 'custom';
     find('#scale-water-label').hidden = !custom; find('#scale-water').disabled = !custom;
     try {
@@ -66,43 +67,45 @@ if (typeof document !== 'undefined') (() => {
       find('#scale-output').innerHTML = `<section class="scale-totals"><b>${fmt(result.dose)}g 粉 → ${fmt(result.water)}g 注水</b><span>粉水比 1:${fmt(result.water/result.dose)}${original.drinkStyle==='iced'?` · 分享壺冰 ${fmt(result.ice)}g`:''}</span></section>
         ${result.ratioChanged?'<p class="scale-warning">粉水比已改變，各段按原注水比例分配，味道可能與原配方不同。</p>':''}
         ${original.drinkStyle==='iced'?'<p class="hint">冰量按粉量比例調整；指定注水量時冰量維持此換算值。注水＋冰係材料總量，唔等於成品重量。</p>':''}
-        <div class="scale-table-wrap"><table class="scale-table"><thead><tr><th>開始／動作</th><th>本段</th><th>磅上累積</th><th>參考條件</th></tr></thead><tbody>${result.stages.map(s=>{const pour=s.action==='注水';if(pour)sum=Math.round((sum+s.water)*10)/10;return `<tr><th>${esc(s.start)}<small>${esc(s.action)}${original.method==='Hario Switch'?' · '+esc(s.valve)+'閥':''}</small></th><td>${pour?'+'+fmt(s.water)+'g':'—'}</td><td>${pour?fmt(sum)+'g':'—'}</td><td>${pour?fmt(s.temp||original.temp)+'°C<br>':''}${s.next==='指定時間'?'等至 '+esc(s.until):esc(s.next)}${s.note?'<small>'+esc(s.note)+'</small>':''}</td></tr>`}).join('')}</tbody></table></div>
+        <div class="scale-table-wrap"><table class="scale-table"><thead><tr><th>開始／動作</th><th>本段</th><th>磅上累積</th><th>參考條件</th></tr></thead><tbody>${result.stages.map(s=>{const pour=s.action==='注水';if(pour)sum=Math.round((sum+s.water)*10)/10;return `<tr><th>${esc(s.start)}<small>${esc(s.action)}${original.method==='Hario Switch'?' · '+esc(s.valve)+'閥':''}</small></th><td>${pour?'+'+fmt(s.water)+'g':'—'}</td><td>${pour?fmt(sum)+'g':'—'}</td><td>${pour?fmt(s.temp||original.temp)+'°C<br>':''}${s.next==='指定時間'?'等至 '+esc(s.until):esc(s.next)}${s.note?'<small '+(original._customRecipe?'translate="no"':'')+'>'+esc(s.note)+'</small>':''}</td></tr>`}).join('')}</tbody></table></div>
         <p class="scale-time"><b>時間沿用原食譜，唔按粉量縮放。</b><br>悶蒸、浸泡及各段時間均作首次試沖參考；等流完以實際流速為準。原總時間參考 ${clock(original.seconds)}，唔係換算後完成時間預測。<br>水溫 ${fmt(original.temp)}°C、C40 ${fmt(original.clicks)} 格亦先保留；分段水溫如上表。</p>
         ${result.largeChange?'<p class="scale-warning">粉量低於原配方 70% 或高於 150%，差距較大；請確認器具容量，時間及研磨需要試沖確認。</p>':''}`;
     } catch(error) {
       result = null; find('#scale-error').textContent = error.message; find('#scale-error').hidden = false; find('#scale-output').hidden = true; find('#scale-apply').disabled = true;
     }
+    window.refreshRecipeWaterMix?.(result?{stages:result.stages,temp:original.temp}:null);
   }
   function openScale(id, fromEditor = false) {
-    original = recipes.find(r=>r.id===id); if(!original)return;
+    original = allRecipes().find(r=>r.id===id); if(!original)return;
     inEditor = fromEditor;
-    find('#scale-origin').textContent = `${original.title} · ${original.author}｜原配方 ${original.dose}g 粉／${original.water}g 水${original.ice?'／冰 '+original.ice+'g':''} · 1:${fmt(original.water/original.dose)}`;
+    find('#scale-origin').innerHTML = `<span ${original._customRecipe?'translate="no"':''}>${esc(original.title)}</span> · ${esc(original.author)}｜原配方 ${original.dose}g 粉／${original.water}g 水${original.ice?'／冰 '+original.ice+'g':''} · 1:${fmt(original.water/original.dose)}`;
     find('#scale-dose').value = fromEditor ? form.elements.dose.value : original.dose;
     find('#scale-water').value = fromEditor ? form.elements.water.value : original.water;
     const saved = fromEditor ? parseMeta(meta.value) : null;
     find('#scale-mode').value = saved?.recipeId===original.id ? saved.mode : (fromEditor && Math.abs(Number(form.elements.water.value)/Number(form.elements.dose.value)-original.water/original.dose)>.05 ? 'custom' : 'ratio');
     find('#scale-apply').textContent = fromEditor ? '帶入目前沖煮表單 →' : '用調整版開新紀錄 →';
+    window.prepareRecipeWaterMix?.(original.waterMix,fromEditor);
     update(); modal.showModal();
   }
   modal.querySelector('[data-scale-close]').onclick = ()=>modal.close();
-  find('#scale-form').oninput = update;
-  find('#scale-form').onchange = update;
+  find('#scale-form').oninput = e=>{if(!e.target.closest('.recipe-water-mix'))update()};
+  find('#scale-form').onchange = e=>{if(!e.target.closest('.recipe-water-mix'))update()};
   modal.addEventListener('click',e=>{const b=e.target.closest('[data-scale-dose]');if(b){find('#scale-dose').value=b.dataset.scaleDose;update()}});
   find('#scale-form').onsubmit = e => {
     e.preventDefault(); update(); if(!result)return;
     const m = {recipeId:original.id,title:original.title,originalDose:original.dose,originalWater:original.water,targetDose:result.dose,targetWater:result.water,mode:find('#scale-mode').value,timePolicy:'original-reference'};
-    const next = {...original,...result,recipeTemplate:original.title+'（按粉量調整版；'+original.author+'）',recipeScale:JSON.stringify(m)};
+    const next = {...original,...result,waterMix:form.elements.waterMix?.value||'',recipeTemplate:original.title+'（按粉量調整版；'+original.author+'）',recipeScale:JSON.stringify(m)};
     next.steps = next.stages.map(s=>`${s.start} ${s.action}${s.action==='注水'?` +${fmt(s.water)}g / ${s.temp||original.temp}°C`:''}${original.method==='Hario Switch'?' · 閥門'+s.valve:''}${s.next==='指定時間'?' · 等至 '+s.until:' · '+s.next}${s.note?' · '+s.note:''}`).join('\n');
     modal.close();
     if (inEditor) {
       for (const k of ['dose','water','ice','temp','clicks','seconds','steps','recipeTemplate','recipeScale']) form.elements[k].value=next[k];
       stages=next.stages.map(s=>stepDefaults(s));renderStages();ratio();showProvenance();
-      $('#recipe-attribution').textContent='食譜起點：'+next.recipeTemplate+'；可以自行修改。';
+      $('#recipe-attribution').innerHTML='食譜起點：<span translate="no">'+esc(next.recipeTemplate)+'</span>；可以自行修改。';
     } else openBrew(next);
     toast('已帶入調整版；時間沿用參考，請記錄實際流完時間');
   };
   launch.onclick=()=>openScale(activeRecipe,true);
-  const previousOpen=openBrew;openBrew=function(r){meta.value='';form.elements.recipeTemplate.value='';previousOpen(r);const m=parseMeta(r?.recipeScale);activeRecipe=m?.recipeId||(recipes.some(x=>x===r)?r.id:null);launch.hidden=!activeRecipe;showProvenance()};
+  const previousOpen=openBrew;openBrew=function(r){meta.value='';form.elements.recipeTemplate.value='';previousOpen(r);const m=parseMeta(r?.recipeScale);activeRecipe=m?.recipeId||(allRecipes().some(x=>x===r)?r.id:null);launch.hidden=!activeRecipe;showProvenance()};
   const previousPreset=$('#preset').onchange;$('#preset').onchange=e=>{previousPreset(e);activeRecipe=e.target.value||null;meta.value='';launch.hidden=!activeRecipe;showProvenance()};
   function addButtons(){if(page!=='recipes')return;document.querySelectorAll('[data-recipe]').forEach(b=>{if(b.parentElement.querySelector('[data-scale-recipe]'))return;const scale=document.createElement('button');scale.type='button';scale.className='scale-inline';scale.dataset.scaleRecipe=b.dataset.recipe;scale.textContent='⚖ 按粉量調整';b.before(scale)})}
   const previousRender=render;render=function(){previousRender();addButtons()};

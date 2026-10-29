@@ -42,3 +42,38 @@
 驗證：`node test-scale.cjs`、`node test-advice.cjs`、`node test-templates.cjs`。
 
 登入後「測試雲端讀寫」會在個人 brews 下更新固定的 __connection_check 診斷文件，再從伺服器讀回確認；此文件不列入沖煮紀錄或統計。
+
+## 分段溝水與壺身吸熱（2026-10-29）
+
+食譜粉量換算及沖煮表單會按各段水量／水溫顯示溝水份量。可合併相同水溫一次準備，或逐段分開準備；分享壺冰及非注水段落不計入。熱水預設 100°C，室溫水 25°C，可修改。水量隨粉量換算；時間及溫度仍沿用參考。
+
+開啟不鏽鋼壺修正後必須輸入空壺重。以水 4.18 J/g/K、304 不鏽鋼 0.50 J/g/K 估算熱平衡；不是實測保證。壺起始狀態可選室溫、預熱至目標＋補償、自訂；每批可覆蓋壺溫。重用暖壺不會自動推算溫度，請量度再輸入。整壺重量包含不直接接觸水的部件，可能高估吸熱。
+
+計算：熱水 g = [水量 × (目標＋補償−室溫水溫) + 壺重 × (0.50 / 4.18) × (目標＋補償−壺初始溫度)] / (熱水溫度−室溫水溫)。停用壺修正時第二項為零。結果以 0.1g 四捨五入，冷水量由總量減去熱水量，確保總量一致。若所需熱水超過總量或小於零，顯示不可行原因。
+
+額外散熱補償預設零，代表混合後至使用前預期跌溫。可用目標與實測溫度差更新原補償（0–15°C），只適用於相近操作，請重新量溫確認。未自動模擬空氣散熱、容器接觸範圍及等待時間。
+
+設定會記在瀏覽器，亦隨儲存的沖煮／自訂食譜透過現有帳戶同步。安全規則不用改。所有畫面輸出均標為估算。物性參考：日本製鐵 SUS304，https://www.nipponsteel.com/product/stainless/list/stainless_steel_shapes/features/ 。
+
+新增檢查：`node test-water-mix.cjs`（吸熱、預熱、補償、不可行目標、精度與多溫度分組）。
+
+## Guided brewing, beans and quick logging (2026-10-29)
+
+- A guided brew view shows the current action, added/cumulative water, stage temperature and Switch valve state. Steps require manual confirmation; timed reference points never automatically skip a pour or a wait-for-drawdown step. Pause/resume uses elapsed timestamps, not interval counts. Optional audio and screen wake lock are best effort; mobile lock-screen/background alerts are not guaranteed. Browser-local timer drafts are isolated per signed-in account (or anonymous mode) and can resume after reload. Timer drafts themselves do not sync between devices.
+- On completion, actual elapsed seconds and entered per-pour measured water are carried into a new record. Blank measurements stay blank. Records include a session ID to guard against saving the same local timer session twice. Bean inventory changes only when the record is saved.
+- Bean profiles have stable IDs per bag/batch, name, roaster, origin, process, roast level, roast/open dates and optional initial grams. Remaining grams are derived from linked saved brew records, so editing an existing record does not double-debit. Unknown consumption is not inferred. Negative stock is visibly flagged. Same-name bags are distinct; old name-only records are linked only through an explicit checkbox.
+- Any saved brew can become a personal recipe. Only target parameters, instructions, source water and mixing settings are copied; observations, ratings, dates and timer session IDs are not. Legacy text-only recipes retain their text and require structured stages before scaling.
+- Actual water, temperature and elapsed time are separate from targets and shown with differences. Per-stage measured water temperature is also available. Rebrewing clears observed values and tasting feedback.
+- Quick actions reuse the previous brew's plan or the account's saved defaults, including bean ID, brewer, dose, water, temperature, C40 clicks, reference seconds, water source and optional kettle/mixing settings. Defaults never replace a selected recipe or an existing record. Advanced stage/mixing controls are collapsible. B75 and ORIGAMI are selectable brewers; these choices do not imply a newly verified built-in recipe.
+- Bean profiles and defaults use typed auxiliary documents in the existing private `users/{uid}/brews` collection and outbox; they are excluded from brew statistics and preserved on brew/recipe saves. Existing Firestore rules are unchanged. Update every deployed frontend from the complete package: old versions do not understand the new metadata document types. Backup export version 3 includes records, custom recipes and auxiliary metadata. This release does not add backup-file import or a recycle bin.
+- Decimal water/temperature validation is now consistent at 0.1g / 0.1°C.
+
+Checks: `node test-experience.cjs` and `node test-cloud.mjs`, alongside existing scale, water mixing, advice and template checks. Browser QA covers profile creation, same-name distinct bags, linked inventory, editing without double-debit, decimal saves, timer pause/reload/completion, actual-value transfer, converting a record to recipe, modifying that recipe, persisted defaults and clean rebrew data. No production coffee records are created during tests.
+
+## English / Traditional Chinese language switcher (2026-10-29)
+
+The interface defaults to Traditional Chinese. A Language / 語言 selector in the main header and dialog headers switches to English immediately and remembers the choice in this browser. Switching does not reload the page, reset a form, restart the brew timer or change a saved record. The HTML language, page title, date, labels, accessibility text, placeholders, built-in reference recipes, calculators, alerts and timer display are localised. Personal bean names, custom recipe names/descriptions/instructions and free-text notes remain as entered. Reference instructions and measured values are not rewritten in storage.
+
+Localisation is presentation-only. Existing Chinese action/valve/condition and roast-level values are deliberately retained as stable stored enums, and displayed option labels are translated separately. There is no data migration or Firebase change. The English catalogue (`dist/i18n-en.json`) contains 550 reviewed UI messages plus dynamic quantity/countdown formats. If the catalogue cannot load, the original Chinese interface remains available. Browser-native validation messages may follow the browser's own language.
+
+New checks: `node test-i18n.cjs`. Browser QA verifies language persistence, Chinese/English switching inside an open form and timer, saving an English-interface brew with canonical step enums, and preserving personal Chinese names including text that also appears in the UI catalogue. Existing calculation, cloud-outbox, bean inventory and recipe tests remain passing.

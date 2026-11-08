@@ -68,7 +68,7 @@ if (typeof document !== 'undefined') (() => {
         ${result.ratioChanged?'<p class="scale-warning">粉水比已改變，各段按原注水比例分配，味道可能與原配方不同。</p>':''}
         ${original.drinkStyle==='iced'?'<p class="hint">冰量按粉量比例調整；指定注水量時冰量維持此換算值。注水＋冰係材料總量，唔等於成品重量。</p>':''}
         <div class="scale-table-wrap"><table class="scale-table"><thead><tr><th>開始／動作</th><th>本段</th><th>磅上累積</th><th>參考條件</th></tr></thead><tbody>${result.stages.map(s=>{const pour=s.action==='注水';if(pour)sum=Math.round((sum+s.water)*10)/10;return `<tr><th>${esc(s.start)}<small>${esc(s.action)}${original.method==='Hario Switch'?' · '+esc(s.valve)+'閥':''}</small></th><td>${pour?'+'+fmt(s.water)+'g':'—'}</td><td>${pour?fmt(sum)+'g':'—'}</td><td>${pour?fmt(s.temp||original.temp)+'°C<br>':''}${s.next==='指定時間'?'等至 '+esc(s.until):esc(s.next)}${s.note?'<small '+(original._customRecipe?'translate="no"':'')+'>'+esc(s.note)+'</small>':''}</td></tr>`}).join('')}</tbody></table></div>
-        <p class="scale-time"><b>時間沿用原食譜，唔按粉量縮放。</b><br>悶蒸、浸泡及各段時間均作首次試沖參考；等流完以實際流速為準。原總時間參考 ${clock(original.seconds)}，唔係換算後完成時間預測。<br>水溫 ${fmt(original.temp)}°C、C40 ${fmt(original.clicks)} 格亦先保留；分段水溫如上表。</p>
+        <p class="scale-time">時間 ${clock(original.seconds)} · 水溫 ${fmt(original.temp)}°C · C40 ${fmt(original.clicks)} 格（沿用原食譜）</p>
         ${result.largeChange?'<p class="scale-warning">粉量低於原配方 70% 或高於 150%，差距較大；請確認器具容量，時間及研磨需要試沖確認。</p>':''}`;
     } catch(error) {
       result = null; find('#scale-error').textContent = error.message; find('#scale-error').hidden = false; find('#scale-output').hidden = true; find('#scale-apply').disabled = true;
@@ -98,7 +98,7 @@ if (typeof document !== 'undefined') (() => {
     next.steps = next.stages.map(s=>`${s.start} ${s.action}${s.action==='注水'?` +${fmt(s.water)}g / ${s.temp||original.temp}°C`:''}${original.method==='Hario Switch'?' · 閥門'+s.valve:''}${s.next==='指定時間'?' · 等至 '+s.until:' · '+s.next}${s.note?' · '+s.note:''}`).join('\n');
     modal.close();
     if (inEditor) {
-      for (const k of ['dose','water','ice','temp','clicks','seconds','steps','recipeTemplate','recipeScale']) form.elements[k].value=next[k];
+      for (const k of ['dose','water','ice','temp','clicks','seconds','steps','recipeTemplate','recipeScale']) {if(k==='steps'&&form.classList.contains('recipe-editing'))continue;form.elements[k].value=next[k];}
       stages=next.stages.map(s=>stepDefaults(s));renderStages();ratio();showProvenance();
       $('#recipe-attribution').innerHTML='食譜起點：<span translate="no">'+esc(next.recipeTemplate)+'</span>；可以自行修改。';
     } else openBrew(next);

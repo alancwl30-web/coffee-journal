@@ -9,7 +9,7 @@ for(const r of ctx.templates){
   let prior=-1;
   for(const s of r.stages){const [m,sec]=s.start.split(':').map(Number),t=m*60+sec;assert.ok(t>=prior,r.id+' chronological stages');prior=t;if(s.water){assert.ok(s.temp>0&&s.temp<=100);assert.ok(s.water>0)}}
   if(r.drinkStyle==='iced')assert.equal(r.ice,100);
-  assert.ok(r.author.includes('非官方'));
+  assert.ok(r.author.includes('本站改編'));
 }
 assert.ok(ctx.templates.find(r=>r.id==='kasuya-iced-46').stages.every(s=>s.valve==='開'));
 console.log('4 templates verified: totals, timeline, temperatures, ice, reference labels');

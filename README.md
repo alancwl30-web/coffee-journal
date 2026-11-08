@@ -1,10 +1,13 @@
-# Coffee Journal — English / Traditional Chinese — 2026-10-29
+# Coffee Journal — 2026-11-09
 
-This full package includes every previous feature and the new Language / 語言 switcher. Traditional Chinese is the default; choose English from the page or dialog header. Your choice is remembered on this browser. Switching preserves open form values and the timer. Personal names and notes remain in their original language. No Firebase changes or data migration.
+English / Traditional Chinese coffee journal with Firebase private account sync.
+
+This complete update adds editing a copy of every built-in/reference recipe, simplifies the editor, removes repeated hints, and adds confirmed brew deletion with automatic linked-bean inventory recalculation. Saved copies preserve source links.
 
 ## Update GitHub Pages
-Unzip and upload ALL contents, including the complete dist/ folder, to your existing main branch, then Commit changes. Do not upload the zip itself. Keep Pages set to main / (root). Root index.html redirects to ./dist/. Refresh after deployment. All files are required, including dist/i18n.js, dist/i18n.css and dist/i18n-en.json. No npm/build step is needed.
 
-Includes guided brewing, bean batches and inventory, personal recipes, target-versus-actual data, defaults/quick rebrew, dose scaling, multi-temperature water mixing with kettle correction, and per-account cloud sync. Timer drafts are device-local; lock-screen audio is not guaranteed. See PROJECT_NOTES.md for details.
+Unzip and upload ALL contents, including the complete dist/ folder and root index.html, to your existing main branch. Commit changes. Do not upload the ZIP or enclosing folder. Keep Pages set to main / (root). No build step or Firebase rule change is needed. Update every device/client to avoid mixing older frontends with deletion markers.
 
-Checks: node test-i18n.cjs; node test-experience.cjs; node test-cloud.mjs; node test-water-mix.cjs; node test-scale.cjs; node test-advice.cjs; node test-templates.cjs.
+Google sign-in keeps each user's records private. Offline deletion waits in the same durable sync queue; there is no restore screen. Historical optional water/ice metadata remains stored even though those editor controls are hidden.
+
+Includes all previous features: recipe scaling, guided brewing, multi-temperature water mixing, bean inventory, personal recipes and language switching. See PROJECT_NOTES.md for details.

@@ -17,3 +17,14 @@ assert.equal(C.elapsed({elapsedMs:2000,running:false,startedAt:1000},6000),2000)
 const timer=JSON.parse(JSON.stringify({elapsedMs:0,running:true,startedAt:1000}));assert.equal(C.elapsed(timer,121000),120000); // Recovery uses timestamps, never interval ticks.
 assert(C.validatePlan(record));assert.throws(()=>C.validatePlan({...record,bean:''}));assert.throws(()=>C.validatePlan({...record,water:200}));assert.throws(()=>C.validatePlan({...record,stages:[]}));assert.throws(()=>C.validatePlan({...record,stages:[{...record.stages[0],until:'bad'}]}));
 console.log('Experience: batch stock/edit isolation, type separation, decimal targets, recipe/rebrew cleanup, timer pause/reload and plan validation passed.');
+
+{
+ const C=require('./dist/experience-core.js');
+ const bean={id:'bag-deletion',weight:200};
+ const rows=[{id:'one',beanId:bean.id,dose:12},{id:'two',beanId:bean.id,dose:15}];
+ assert.equal(C.remaining(bean,rows),173);
+ const deleted=[rows[0],{...rows[1],_deleted:true}];
+ assert.equal(C.remaining(bean,deleted),188,'deleted brew returns dose to stock');
+ assert.equal(C.split(deleted).records.length,1,'deleted rows stay out of statistics');
+ assert.equal(C.remaining(bean,[{...rows[0],dose:13}]),187,'editing dose recalculates stock');
+}

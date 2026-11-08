@@ -70,7 +70,7 @@
     persist(next, includesRecipes=false) {
       if(!includesRecipes)next=[...next,...appUI.getRecords().filter(r=>r._customRecipe||r._beanProfile||r._preferences)];
       if(phase==='loading'||phase==='failed'){toast('帳戶同步未準備好；請重試連線或揀「繼續只存本機」。');return false}
-      if(!user){try{localStorage.setItem(legacyKey,JSON.stringify(next));appUI.replaceRecords(next);updateStatus();return true}catch{toast('本機儲存失敗，請先匯出備份。');return false}}
+      if(!user){try{const deleted=legacy().filter(r=>r._deleted);const deletedIds=new Set(deleted.map(r=>r.id));next=[...deleted,...next.filter(r=>!deletedIds.has(r.id))];localStorage.setItem(legacyKey,JSON.stringify(next));appUI.replaceRecords(next);updateStatus();return true}catch{toast('本機儲存失敗，請先匯出備份。');return false}}
       try {
         if(phase!=='ready'||!state)throw new Error('帳戶資料未準備好，請稍後再儲存。');
         const staged=core.queueChanges(currentDisk(),appUI.getRecords(),next,()=>crypto.randomUUID());

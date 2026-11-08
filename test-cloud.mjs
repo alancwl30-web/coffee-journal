@@ -60,3 +60,28 @@ console.log('Cloud outbox verified: restart recovery, account isolation, concurr
  assert.equal(emptyState('another-owner').records.length,0);
  console.log('Bean/settings sync: private durable queue, server acknowledgement, brew edits preserve metadata.');
 }
+
+// Explicit deletion survives offline reload, stale tabs and delayed acknowledgements.
+{
+ const brew={id:'delete-test',bean:'Bag',beanId:'bag',dose:12,date:'2026-11-09'};
+ const profile={id:'bag',_beanProfile:true,title:'Bag',weight:200};
+ let s=queueChanges(emptyState('delete-owner'),[],[brew,profile],token);
+ s=mergeSnapshot(s,s.records.map(r=>({id:r.id,data:{...r,_syncToken:s.pending[r.id].token},pending:false})),true);
+ const marker={id:brew.id,_deleted:true,date:'2026-11-09'};
+ s=queueChanges(s,[brew,profile],[marker,profile],token);
+ const deleteToken=s.pending[brew.id].token;
+ s=readState(JSON.stringify(s),'delete-owner');
+ assert.equal(s.records.find(r=>r.id===brew.id)._deleted,true);
+ s=mergeSnapshot(s,[{id:brew.id,data:brew,pending:false},{id:profile.id,data:profile,pending:false}],true);
+ assert.equal(s.records.find(r=>r.id===brew.id)._deleted,true,'offline deletion masks stale remote brew');
+ s=acknowledge(s,brew.id,'old-write-token');assert.equal(s.pending[brew.id].token,deleteToken);
+ s=mergeSnapshot(s,[{id:brew.id,data:{...marker,_syncToken:deleteToken},pending:false},{id:profile.id,data:profile,pending:false}],true);
+ assert.equal(s.pending[brew.id],undefined);
+ s=queueChanges(s,[brew],[{...brew,water:220}],token);
+ assert.equal(s.records.find(r=>r.id===brew.id)._deleted,true,'stale editor cannot resurrect deleted brew');
+ let stale=queueChanges(emptyState('delete-owner'),[],[brew],token);
+ stale=mergeSnapshot(stale,[{id:brew.id,data:marker,pending:false}],true);
+ assert.equal(stale.pending[brew.id],undefined,'server deletion cancels stale pending edits');
+ assert.equal(stale.records[0]._deleted,true);
+ console.log('Deletion sync: offline recovery, stale editor protection, cloud acknowledgement and account isolation passed.');
+}

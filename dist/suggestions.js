@@ -4,7 +4,7 @@
   const prefs=document.createElement('section');prefs.className='taste-preferences';
   prefs.innerHTML='<h3>啱唔啱自己？</h3><p class="hint">感覺強弱同喜唔喜歡分開記，建議先以你嘅口味為準。</p><div class="fields">'+Object.entries(preferenceFields).map(([key,f])=>`<label>${f.title}<select name="${key}"><option value="">未選擇</option>${f.options.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></label>`).join('')+'</div><div id="trial-context" hidden></div>';
   $('#ratings').after(prefs);
-  const tempLabel=document.createElement('label');tempLabel.className='temperature-source';tempLabel.innerHTML='水溫資料來源<select name="tempSource"><option value="unknown">未註明／未量度</option><option value="estimated">溝水計算／估算</option><option value="measured">溫度計實測</option></select>';form.elements.temp.closest('.fields').after(tempLabel);
+  const tempLabel=document.createElement('label');tempLabel.className='temperature-source';tempLabel.hidden=true;tempLabel.innerHTML='水溫資料來源<select name="tempSource"><option value="unknown">未註明／未量度</option><option value="estimated">溝水計算／估算</option><option value="measured">溫度計實測</option></select>';form.elements.temp.closest('.fields').after(tempLabel);
   const compare=document.createElement('dialog');compare.id='brew-comparison';compare.setAttribute('aria-labelledby','compare-title');document.body.append(compare);
   let selectedId=null, pendingTrial=null;
   const key=b=>String(b||'').trim().toLocaleLowerCase();

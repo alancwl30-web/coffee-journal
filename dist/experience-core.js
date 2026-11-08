@@ -1,8 +1,8 @@
 // Pure transformations shared by browser flows and regression checks.
 (function(root){
  const auxiliary=r=>!!(r._customRecipe||r._beanProfile||r._preferences);
- const split=rows=>({records:rows.filter(r=>!auxiliary(r)),recipes:rows.filter(r=>r._customRecipe),extras:rows.filter(r=>r._beanProfile||r._preferences)});
- const remaining=(bean,records)=>{const used=records.filter(r=>r.beanId===bean.id&&!r.demo).reduce((n,r)=>n+(Number(r.dose)||0),0);return bean.weight==null||bean.weight===''?null:Math.round((Number(bean.weight)-used)*10)/10};
+ const split=all=>{const rows=all.filter(r=>!r._deleted);return ({records:rows.filter(r=>!auxiliary(r)),recipes:rows.filter(r=>r._customRecipe),extras:rows.filter(r=>r._beanProfile||r._preferences)});};
+ const remaining=(bean,records)=>{const used=records.filter(r=>r.beanId===bean.id&&!r.demo&&!r._deleted).reduce((n,r)=>n+(Number(r.dose)||0),0);return bean.weight==null||bean.weight===''?null:Math.round((Number(bean.weight)-used)*10)/10};
  const stageCopy=stages=>(stages||[]).map(s=>({...s,actualWater:'',actualTime:'',actualTemp:''}));
  function rebrew(r){const next=JSON.parse(JSON.stringify(r));for(const k of ['id','demo','rating','sweet','acid','bitter','body','prefAcid','prefStrength','prefBitter','prefSweet','actualWater','actualTemp','actualSeconds','timerSessionId','experiment','trialResult','date','finishedAt'])delete next[k];next.notes='';next.stages=stageCopy(r.stages);return next}
  function recipeFromBrew(r,id,title){return {id,_customRecipe:true,title,author:'我的自訂食譜',desc:'由沖煮紀錄收藏',source:'',method:r.method,dose:Number(r.dose),water:Number(r.water),temp:Number(r.temp),clicks:Number(r.clicks),seconds:Number(r.seconds),drinkStyle:r.drinkStyle||'hot',ice:Number(r.ice||0),steps:r.steps||'',waterSource:r.waterSource||'',waterMix:r.waterMix||'',stages:stageCopy(r.stages),supplementalSteps:''}}

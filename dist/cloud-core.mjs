@@ -15,6 +15,7 @@ export function queueChanges(state, before, next, makeToken) {
     if (r.demo) continue;
     if (!validId(r.id)) throw new Error('紀錄 ID 格式不正確，未能儲存。');
     if (JSON.stringify(old.get(r.id))===JSON.stringify(r)) continue;
+    if(byId.get(r.id)?._deleted&&!r._deleted)continue;
     const record=copy(r); delete record._syncToken; delete record._updatedAt;
     byId.set(record.id,record);
     s.pending[record.id]={record,token:makeToken()};
@@ -23,11 +24,12 @@ export function queueChanges(state, before, next, makeToken) {
   s.records=[...byId.values()]; return s;
 }
 export function mergeSnapshot(state, remote, authoritative) {
-  const s=copy(state), rows=new Map((authoritative?[]:s.records).map(r=>[r.id,r]));
+  const s=copy(state), rows=new Map((authoritative?s.records.filter(r=>r._deleted):s.records).map(r=>[r.id,r]));
   for (const doc of remote) {
     if (!validId(doc.id) || (doc.id==='__connection_check' && doc.data._systemTest===true)) continue;
     const record={...copy(doc.data),id:doc.id}; delete record._syncToken; delete record._updatedAt;
-    rows.set(doc.id,record);
+    if(record._deleted&&s.pending[doc.id]&&!s.pending[doc.id].record._deleted)delete s.pending[doc.id];
+    if(!rows.get(doc.id)?._deleted||record._deleted)rows.set(doc.id,record);
     if (authoritative && !doc.pending && s.pending[doc.id]?.token===doc.data._syncToken) delete s.pending[doc.id];
   }
   for (const [id,p] of Object.entries(s.pending)) rows.set(id,copy(p.record));

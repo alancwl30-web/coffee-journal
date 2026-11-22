@@ -20,16 +20,17 @@
  form.querySelector('#ratings').previousElementSibling.before(fields);
  function actualComparison(){const rows=[['water','actualWater','總注水','g'],['temp','actualTemp','水溫','°C'],['seconds','actualSeconds','完成時間','秒']];$('#actual-comparison').innerHTML=`<table class="simple-table"><thead><tr><th>項目</th><th>目標</th><th>實際</th><th>差異</th></tr></thead><tbody>${rows.map(([target,actual,label,unit])=>{const a=form.elements[actual].value,t=form.elements[target].value,d=Number(a)-Number(t);return `<tr><th>${label}</th><td>${esc(t)}${unit}</td><td>${a===''?'未量度':esc(a)+unit}</td><td>${a===''?'—':(d>0?'+':'')+fmt(d)+unit}</td></tr>`}).join('')}</tbody></table>`}
  form.addEventListener('input',actualComparison);form.addEventListener('change',actualComparison);
- const advanced=document.createElement('details');advanced.className='advanced-brew';advanced.innerHTML='<summary>分段流程、溝水及進階參數</summary>';
- const anchor=stageSection;anchor.before(advanced);advanced.append(stageSection);
+ const advanced=document.createElement('details');advanced.className='advanced-brew';advanced.innerHTML='<summary>溝水、分段流程及進階參數</summary>';
+ const anchor=stageSection;anchor.before(advanced);
  const mixPanel=form.querySelector('[data-mix-kind="editor"]');if(mixPanel)advanced.append(mixPanel);
+ advanced.append(stageSection);
  advanced.append(form.elements.steps.closest('label'));
  const quick=document.createElement('div');quick.className='quick-actions';quick.innerHTML='<button type="button" data-use-last>沿用上一杯配方</button><button type="button" data-apply-defaults>套用常用設定</button><button type="button" data-open-defaults>設定常用參數</button>';
  beanPicker.before(quick);
  const timerLaunch=document.createElement('button');timerLaunch.type='button';timerLaunch.className='primary timer-launch';timerLaunch.textContent='開始逐步沖煮 →';advanced.after(timerLaunch);
  const hint=document.createElement('p');hint.className='hint timer-hint';hint.textContent='先填豆名及確認配方；沖煮模式會逐段顯示水量、水溫及開關閥，最後再評分儲存。';timerLaunch.after(hint);
  const recipeEditor=()=>form.classList.contains('recipe-editing');
- window.coffeeRecipeModeChanged=on=>{if(on){form.elements.beanId.value='';form.elements.timerSessionId.value='';form.elements.finishedAt.value='';form.elements.bean.readOnly=false;}[beanPicker,fields,quick,timerLaunch,hint].forEach(el=>el.hidden=on);advanced.open=on;advanced.querySelector('summary').textContent=on?'食譜流程及溝水設定':'分段流程、溝水及進階參數'};
+ window.coffeeRecipeModeChanged=on=>{if(on){form.elements.beanId.value='';form.elements.timerSessionId.value='';form.elements.finishedAt.value='';form.elements.bean.readOnly=false;}[beanPicker,fields,quick,timerLaunch,hint].forEach(el=>el.hidden=on);advanced.open=on;advanced.querySelector('summary').textContent=on?'溝水設定及食譜流程':'溝水、分段流程及進階參數'};
  function updateBeanPicker(){const select=$('#bean-picker'),chosen=form.elements.beanId.value;select.innerHTML='<option value="">手動輸入豆名／未連結批次</option>'+profiles().map(b=>`<option translate="no" value="${esc(b.id)}">${esc(b.title)}${b.batch?' · '+esc(b.batch):''}${b.roastedOn?' · '+esc(b.roastedOn):''}</option>`).join('');select.value=chosen;form.elements.bean.readOnly=!!chosen}
  function pickBean(id){const b=profiles().find(b=>b.id===id);form.elements.beanId.value=b?.id||'';form.elements.bean.readOnly=!!b;if(b)form.elements.bean.value=b.title;$('#bean-picker').value=b?.id||''}
  $('#bean-picker').onchange=e=>pickBean(e.target.value);

@@ -1,0 +1,7 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');const C=require('./dist/matcha-core.js');
+const base={title:'Test matcha',powder:3,water:40,milk:150,ice:80,sweetener:5,temp:80,whiskSeconds:30,rating:4,notes:'private',date:'2026-11-22',kind:'drink',tinId:'tin'};
+assert.equal(C.scale(base,2).milk,300);assert.equal(C.scale(base,2,true).milk,150);assert.equal(C.scale(base,2,true).water,80);assert.equal(C.scale(base,2).temp,80);assert.equal(C.scale(base,2).whiskSeconds,30);assert.equal(base.powder,3);assert.throws(()=>C.scale(base,0));assert.throws(()=>C.validate({...base,powder:0}));
+const tin={id:'tin',weight:30};assert.equal(C.remaining(tin,[base]),27);assert.equal(C.remaining(tin,[{...base,powder:4}]),26);assert.equal(C.remaining(tin,[{...base,_deleted:true}]),30);assert.equal(C.remaining(tin,[{...base,kind:'recipe'}]),30);assert.equal(C.remaining({...tin,id:'other'},[base]),30);
+const recipe=C.recipe(base,'recipe');assert.equal(recipe.rating,undefined);assert.equal(recipe.date,undefined);assert.equal(recipe.notes,undefined);assert.equal(recipe.kind,'recipe');assert.equal(C.rebrew(base).rating,undefined);
+const cloud=fs.readFileSync('dist/matcha-cloud.mjs','utf8');assert(!cloud.includes("'brews'"));assert(cloud.includes("'matcha'"));assert(!cloud.includes('slowbrew-v1'));
+console.log('Matcha: ratios, fixed milk, unchanged time/temperature, per-tin stock, edits/deletion, recipe cleanup and storage namespace separation passed.');

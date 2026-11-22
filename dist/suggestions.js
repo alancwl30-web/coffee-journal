@@ -38,6 +38,7 @@
     pendingTrial={baseId:base.id,baseDate:base.date,bean:base.bean,label:advice?`${fieldTitle[advice.field]} ${advice.from} → ${advice.value}${unit[advice.field]}；其他配方設定沿用。`:'重沖最滿意嗰杯配方，觀察可唔可以重現。',field:advice?.field||null,from:advice?.from??null,value:advice?.value??null};
     trialContext({experiment:pendingTrial});
   }
+  window.getCoffeeTrial=()=>pendingTrial?JSON.parse(JSON.stringify(pendingTrial)):null;
   const priorPersist=persist;persist=function(next){const target=editing||next[0]?.id;const updated=next.map(r=>r.id===target?{...r,...(pendingTrial?{experiment:pendingTrial}:{})}:r);const ok=priorPersist(updated);if(ok){selectedId=target;setTimeout(()=>{if(!$('#editor').open)showAdvice(target)},0)}return ok};
   const priorCard=card;card=function(r){const html=priorCard(r);return r.demo?html:html.replace('</article>',`<button type="button" class="advice-link" data-advice="${esc(r.id)}">比較紀錄・下杯建議 ↗</button></article>`)};
   document.addEventListener('click',e=>{const b=e.target.closest('[data-advice]');if(b)showAdvice(b.dataset.advice)});

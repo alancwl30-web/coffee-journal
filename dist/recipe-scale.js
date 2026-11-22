@@ -107,6 +107,7 @@ if (typeof document !== 'undefined') (() => {
   launch.onclick=()=>openScale(activeRecipe,true);
   const previousOpen=openBrew;openBrew=function(r){meta.value='';form.elements.recipeTemplate.value='';previousOpen(r);const m=parseMeta(r?.recipeScale);activeRecipe=m?.recipeId||(allRecipes().some(x=>x===r)?r.id:null);launch.hidden=!activeRecipe;showProvenance()};
   const previousPreset=$('#preset').onchange;$('#preset').onchange=e=>{previousPreset(e);activeRecipe=e.target.value||null;meta.value='';launch.hidden=!activeRecipe;showProvenance()};
+  window.refreshRecipeScaleSelection=()=>{const m=parseMeta(meta.value);activeRecipe=m?.recipeId||$('#preset').value||null;launch.hidden=!activeRecipe;showProvenance()};
   function addButtons(){if(page!=='recipes')return;document.querySelectorAll('[data-recipe]').forEach(b=>{if(b.parentElement.querySelector('[data-scale-recipe]'))return;const scale=document.createElement('button');scale.type='button';scale.className='scale-inline';scale.dataset.scaleRecipe=b.dataset.recipe;scale.textContent='⚖ 按粉量調整';b.before(scale)})}
   const previousRender=render;render=function(){previousRender();addButtons()};
   document.addEventListener('click',e=>{const b=e.target.closest('[data-scale-recipe]');if(b)openScale(b.dataset.scaleRecipe)});

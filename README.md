@@ -1,13 +1,15 @@
-# Coffee Journal — 2026-11-09
+# Coffee & Matcha Journal — 2026-11-22
 
-English / Traditional Chinese coffee journal with Firebase private account sync.
+Complete English / Traditional Chinese website update. Includes all previous coffee functionality and an isolated matcha journal with drinks, recipes, batch inventory, scaling, ratings, comparison, local drafts and export. Coffee data is not migrated or rewritten.
 
-This complete update adds editing a copy of every built-in/reference recipe, simplifies the editor, removes repeated hints, and adds confirmed brew deletion with automatic linked-bean inventory recalculation. Saved copies preserve source links.
+## GitHub update
 
-## Update GitHub Pages
+Unzip and upload ALL contents, including the complete dist/ folder and root index.html, to your main branch. Commit changes. Keep Pages set to main / (root). Do not upload the ZIP or enclosing folder.
 
-Unzip and upload ALL contents, including the complete dist/ folder and root index.html, to your existing main branch. Commit changes. Do not upload the ZIP or enclosing folder. Keep Pages set to main / (root). No build step or Firebase rule change is needed. Update every device/client to avoid mixing older frontends with deletion markers.
+## Required Firebase addition
 
-Google sign-in keeps each user's records private. Offline deletion waits in the same durable sync queue; there is no restore screen. Historical optional water/ice metadata remains stored even though those editor controls are hidden.
+For matcha cloud sync, add the block in MATCHA_FIREBASE_RULES.txt INSIDE your existing match /databases/{database}/documents block, then Publish in Firebase Console. KEEP all existing coffee and Home Kitchen rules. Do not replace the full live rules file. Coffee needs no rule change. No login provider changes are needed.
 
-Includes all previous features: recipe scaling, guided brewing, multi-temperature water mixing, bean inventory, personal recipes and language switching. See PROJECT_NOTES.md for details.
+Matcha uses users/{uid}/matcha, independently of coffee's users/{uid}/brews. Signed-in writes are queued locally until permissions/connection work; the screen reports pending or failed sync. Anonymous matcha entries stay on this device until explicitly imported into a signed-in account. Drafts remain device-local.
+
+The production Firebase rule has not been published or tested by this update. See PROJECT_NOTES.md for tests and details.

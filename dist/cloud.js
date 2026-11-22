@@ -111,7 +111,7 @@
   };
   find('cloud-logout').onclick=async()=>{try{await sdk.signOut(sdk.auth);toast('已登出；待同步紀錄仍保留喺原帳戶嘅本機副本。')}catch(error){lastError=message(error);updateStatus()}};
   find('cloud-retry').onclick=()=>{if(phase==='loading'){location.reload();return}if(sdk&&user&&state){lastError='';attachListener();flush();updateStatus()}else if(!sdk)connect();else location.reload()};
-  find('cloud-local').onclick=()=>{if(user){lastError='此帳戶本機資料需先修復，請先匯出備份；登出後先可用未登入模式。';updateStatus();return}phase='ready';lastError='';publishRows();updateStatus()};
+  find('cloud-local').onclick=()=>{if(user){lastError='此帳戶本機資料需先修復，請先匯出備份；登出後先可用未登入模式。';updateStatus();return}phase='ready';lastError='';window.coffeeExperienceAccount?.('local');publishRows();updateStatus()};
   find('cloud-import-button').onclick=async()=>{
     if(!user||!serverSeen||importing)return;importing=true;updateStatus();
     const uid=user.uid,myEpoch=epoch;
